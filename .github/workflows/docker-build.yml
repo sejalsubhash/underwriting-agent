@@ -5,11 +5,6 @@ on:
     branches:
       - main
 
-env:
-  AWS_REGION: ap-south-1
-  ECR_BACKEND_REPO: backend-repo
-  ECR_FRONTEND_REPO: frontend-repo
-
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -23,19 +18,23 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build & Push Backend Image
         run: |
-          docker build -t $ECR_BACKEND_REPO ./backend
-          docker tag $ECR_BACKEND_REPO:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/$ECR_BACKEND_REPO:latest
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/$ECR_BACKEND_REPO:latest
+          docker build -t ${{ vars.ECR_BACKEND_REPO }} ./backend
+          docker tag ${{ vars.ECR_BACKEND_REPO }}:latest \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ vars.ECR_BACKEND_REPO }}:latest
+          docker push \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ vars.ECR_BACKEND_REPO }}:latest
 
       - name: Build & Push Frontend Image
         run: |
-          docker build -t $ECR_FRONTEND_REPO ./frontend
-          docker tag $ECR_FRONTEND_REPO:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/$ECR_FRONTEND_REPO:latest
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/$ECR_FRONTEND_REPO:latest
+          docker build -t ${{ vars.ECR_FRONTEND_REPO }} ./frontend
+          docker tag ${{ vars.ECR_FRONTEND_REPO }}:latest \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ vars.ECR_FRONTEND_REPO }}:latest
+          docker push \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ vars.ECR_FRONTEND_REPO }}:latest
