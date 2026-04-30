@@ -9,50 +9,49 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
 
+    env:
+      AWS_REGION: ap-south-1
+      BACKEND_REPO: underwriting-backend
+      FRONTEND_REPO: underwriting-frontend
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 🔍 Debug (remove later)
-      - name: Debug Variables
-        run: |
-          echo "AWS_REGION=${{ vars.AWS_REGION }}"
-          echo "BACKEND_REPO=${{ vars.ECR_BACKEND_REPO }}"
-          echo "FRONTEND_REPO=${{ vars.ECR_FRONTEND_REPO }}"
-
-      # ✅ AWS Login (with fallback region)
+      # ✅ Configure AWS Credentials
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION || 'ap-south-1' }}
+          aws-region: ${{ env.AWS_REGION }}
 
+      # ✅ Login to ECR
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      # ✅ Backend Build & Push
+      # ✅ Build & Push Backend Image
       - name: Build & Push Backend Image
         run: |
           IMAGE_TAG=${{ github.sha }}
 
-          docker build -t ${{ vars.ECR_BACKEND_REPO }} ./backend
+          docker build -t $BACKEND_REPO ./backend
 
-          docker tag ${{ vars.ECR_BACKEND_REPO }}:latest \
-          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION || 'ap-south-1' }}.amazonaws.com/${{ vars.ECR_BACKEND_REPO }}:$IMAGE_TAG
+          docker tag $BACKEND_REPO:latest \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPO:$IMAGE_TAG
 
           docker push \
-          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION || 'ap-south-1' }}.amazonaws.com/${{ vars.ECR_BACKEND_REPO }}:$IMAGE_TAG
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPO:$IMAGE_TAG
 
-      # ✅ Frontend Build & Push
+      # ✅ Build & Push Frontend Image
       - name: Build & Push Frontend Image
         run: |
           IMAGE_TAG=${{ github.sha }}
 
-          docker build -t ${{ vars.ECR_FRONTEND_REPO }} ./frontend
+          docker build -t $FRONTEND_REPO ./frontend
 
-          docker tag ${{ vars.ECR_FRONTEND_REPO }}:latest \
-          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION || 'ap-south-1' }}.amazonaws.com/${{ vars.ECR_FRONTEND_REPO }}:$IMAGE_TAG
+          docker tag $FRONTEND_REPO:latest \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPO:$IMAGE_TAG
 
           docker push \
-          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION || 'ap-south-1' }}.amazonaws.com/${{ vars.ECR_FRONTEND_REPO }}:$IMAGE_TAG
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPO:$IMAGE_TAG
